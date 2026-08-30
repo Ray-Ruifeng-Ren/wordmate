@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+
+# XcodeGen 可从 project.yml 重新生成,但保留 .xcodeproj 方便直接打开
