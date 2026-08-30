@@ -1,47 +1,67 @@
-# 词伴 WordPal
+# Wordmate 🐢
 
-聊天式英汉查词 + 生词库 iOS App。
+**Chat your way to a bigger English vocabulary.**
 
-## 功能
+Wordmate is a chat-style English–Chinese dictionary app for iOS. Send an English word and get a Chinese definition card back; send a Chinese word and get the best English equivalent. Typos are fine — it guesses what you meant. Every word you look up is saved automatically, then drilled with flashcards until you know it.
 
-- **聊天查词**:发英文词回中文释义,发中文词回英文表达;拼写不准会自动猜测校正(卡片上标注"已从 xxx 校正")
-- **生词库**:查过的词自动入库(按词条去重),含音标、词性、释义、双语例句;支持搜索、左滑删除
-- **归档机制**:点开词条详情计一次"查看释义",满 5 次自动归档;归档词可一键移回重新巩固
-- **推送回顾**:每天定时本地推送待巩固生词(时间可在设置里改);每次打开 App 弹出"今日生词回顾"(30 分钟冷却)
+## Features
 
-## 查词引擎
+- **Chat lookup** — English → Chinese definition, Chinese → English word, with phonetics, part of speech, and bilingual example sentences
+- **Typo tolerance** — misspelled input is auto-corrected ("recieve" → *receive*), with the correction clearly labeled
+- **Auto vocabulary book** — every looked-up word lands in your word list, deduplicated
+- **Flashcard review** — see only the word first, test yourself, then tap **"I remember" / "Not yet"**; remember a word 5 times and it's archived for good, miss it and it comes back later in the round
+- **Auto pronunciation** — each word is read aloud 3 times (on lookup, on card flip, on detail view), powered by on-device TTS
+- **Daily reminders** — a local notification each morning with the words waiting for review; opening the app pops a review session too
 
-- 设置里填入 Anthropic API Key 后走 Claude(`claude-opus-5`,已带 server-side fallback)
-- 未配置 Key 时用内置演示词典(约 40 个常用词,前缀补全 + 编辑距离 ≤2 模糊纠错)
+## Lookup engine
 
-## 构建
+- With an Anthropic API key (set in-app): full lookup via **Claude Haiku 4.5** — any word, any typo, fresh example sentences
+- Without a key: a built-in demo dictionary (~40 common words) with prefix completion and edit-distance fuzzy matching
+- Optional workspace ID field for identity-linked API keys
 
-需要完整版 Xcode(App Store 安装),CommandLineTools 不够。
+## Tech
+
+SwiftUI (iOS 17+) · XcodeGen · AVSpeechSynthesizer · UserNotifications · JSON persistence (no backend, all data stays on device)
+
+## Build
+
+Requires full Xcode (not just Command Line Tools).
 
 ```bash
-# 生成 Xcode 工程(仅 project.yml 变动后需要重新执行)
+# regenerate the Xcode project after changing project.yml or adding files
 xcodegen generate
 
-# 命令行构建到模拟器
+# build for simulator
 xcodebuild -project WordPal.xcodeproj -scheme WordPal \
-  -destination 'platform=iOS Simulator,name=iPhone 16' build
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
 ```
 
-或直接 `open WordPal.xcodeproj` 在 Xcode 里 ⌘R 运行。
+Or just `open WordPal.xcodeproj` and hit ⌘R.
 
-## 结构
+> Tip: keep derived data outside iCloud-synced folders (Desktop/Documents) — file-provider extended attributes break codesign.
+
+## Project layout
 
 ```
 WordPal/
-  WordPalApp.swift        入口 + TabView + 打开时回顾弹窗
+  WordPalApp.swift        entry point, TabView, review popup on launch
   Models.swift            LookupResult / VocabWord / ChatMessage
-  VocabStore.swift        JSON 持久化(Documents/vocab.json、chat.json)
-  TranslationService.swift Claude API 调用 + 宽容 JSON 解析
-  DemoDictionary.swift    演示词典 + Levenshtein 模糊匹配
-  NotificationManager.swift 每日本地推送
-  ChatView.swift          聊天页 + 查词卡片
-  VocabView.swift         生词库(生词/归档分段 + 搜索)
-  WordDetailView.swift    详情页(计数与自动归档发生在这里)
-  ReviewSheet.swift       打开 App 时的回顾弹窗
-  SettingsView.swift      API Key / 推送时间 / 清空聊天
+  VocabStore.swift        JSON persistence (Documents/vocab.json, chat.json)
+  TranslationService.swift Claude API call + lenient JSON parsing
+  DemoDictionary.swift    offline demo dictionary + Levenshtein matching
+  SpeechService.swift     3× auto pronunciation via AVSpeechSynthesizer
+  NotificationManager.swift daily local notification
+  ChatView.swift          chat UI + definition cards
+  VocabView.swift         word list (active/archived) + search
+  ReviewCardsView.swift   flashcard session
+  WordDetailView.swift    word detail (reference only)
+  SettingsView.swift      API key / workspace / reminder time / speech toggle
 ```
+
+---
+
+## 中文说明
+
+聊天式英汉查词 + 生词库 iOS App:发英文回中文释义,发中文回英文表达,拼错自动校正;查过的词自动进生词库,闪卡自测("记住了"满 5 次自动归档,"还没记住"本轮稍后再现);查词与翻卡自动朗读 3 遍;每天定时推送待巩固生词,打开 App 即弹回顾。
+
+查词引擎:App 设置里填入 Anthropic API Key 后由 Claude Haiku 4.5 提供全量查词;未配置时使用内置演示词典(约 40 词,支持模糊纠错)。所有数据仅存本机,无后端。
